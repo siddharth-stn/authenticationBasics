@@ -33,7 +33,7 @@ app.set("view engine", "pug");
 
 app.use(session({ secret: "cats", resave: false, saveUninitialized: true }));
 
-app.use(
+passport.use(
   new LocalStrategy((username, password, done) => {
     User.findOne({ username: username }, (err, user) => {
       if (err) {
