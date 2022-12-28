@@ -6,4 +6,14 @@ html(lang="en")
         meta(name="viewport", content="width=device-width, initial-scale=1.0")
         title Authentication Basics
     body 
-        h1 Hello World!
+        if user 
+            h1 Welcome back #{user.username}
+            a(href="/log-out") Log Out
+        else 
+            h1 Please Log in 
+            form(method="POST" action="/log-in")
+                label(for="username") Username: 
+                input(type="text" name="username" placeholder="Username")
+                label(for="password") Password: 
+                input(type="password" name="password")
+                button Log In
