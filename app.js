@@ -31,8 +31,11 @@ const app = express();
 app.set("views", __dirname);
 app.set("view engine", "pug");
 
-app.use(session({ secret: "cats", resave: false, saveUninitialized: true }));
+//* Configure passport
 
+/* Step One(setting up the LocalStrategy):-
+This function will be called by passport when we use the 
+passport.authenticate() as a middleware in a route */
 passport.use(
   new LocalStrategy((username, password, done) => {
     User.findOne({ username: username }, (err, user) => {
@@ -42,7 +45,7 @@ passport.use(
       if (!user) {
         return done(null, false, { message: "Incorrect username" });
       }
-      if (user.password !== password) {
+      if (password !== user.password) {
         return done(null, false, { message: "Incorrect password" });
       }
       return done(null, user);
@@ -50,21 +53,30 @@ passport.use(
   })
 );
 
+/* These two functions make sure 
+that the user remains logged in after authentication, 
+and stay logged in as the user moves around in the app(website).
+Passport will use some data to create a cookie which is stored
+in the user's browser. These two functions are define the information 
+which passport is looking for when it creates and then decodes the cookie. */
 passport.serializeUser((user, done) => {
-  done(null, user.id);
+  // Here the user object is supplied by passport
+  done(null, user.id); // This user id is stored in the cookie in our browser
 });
 
 passport.deserializeUser((id, done) => {
+  // Here the id is supplied by passport from the cookie
   User.findById(id, (err, user) => {
-    done(err, user);
+    done(err, user); // user is added to req as req.user by passport
   });
 });
 
+app.use(session({ secret: "cats", resave: false, saveUninitialized: true }));
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(express.urlencoded({ extended: false }));
 
-app.get("/", (req, res, next) => res.render("index", { user: req.user }));
+app.get("/", (req, res, next) => res.render("index", { user: req.user })); // This req.user is supplied by the passport middleware which runs on every route called.
 app.get("/sign-up", (req, res, next) => res.render("sign-up-form"));
 app.post("/sign-up", (req, res, next) => {
   const user = new User({
@@ -79,6 +91,14 @@ app.post("/sign-up", (req, res, next) => {
   });
 });
 
+/* all we have to do is call passport.authenticate(). This middleware performs
+numerous functions behind the scenes. Among other things, it looks at
+the request body for parameters named username and password 
+then runs the LocalStrategy function that we defined earlier to 
+see if the username and password are in the database.*/
+/* It then creates a session cookie that gets stored in the 
+user’s browser, and that we can access in all future requests 
+to see whether or not that user is logged in.   */
 app.post(
   "/log-in",
   passport.authenticate("local", {
