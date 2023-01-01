@@ -134,5 +134,3 @@ app.get("/log-out", (req, res, next) => {
 app.listen(process.env.PORT, () => {
   console.log("App is listening on PORT 3000...");
 });
-
-//! Have to work with bcrypt
