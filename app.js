@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const path = require("path");
 const session = require("express-session");
@@ -7,12 +8,12 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 const bcrypt = require("bcrypt");
 
-const mongoDb =
-  "mongodb+srv://m001-student:mongodb-basics@sandbox.ed9rkru.mongodb.net/authenticationBasics?retryWrites=true&w=majority";
-
 mongoose.set("strictQuery", false);
 
-mongoose.connect(mongoDb, { useUnifiedTopology: true, useNewUrlparser: true });
+mongoose.connect(process.env.MONGO_KEY, {
+  useUnifiedTopology: true,
+  useNewUrlparser: true,
+});
 
 const db = mongoose.connection;
 
@@ -72,7 +73,13 @@ passport.deserializeUser((id, done) => {
   });
 });
 
-app.use(session({ secret: "cats", resave: false, saveUninitialized: true }));
+app.use(
+  session({
+    secret: process.env.SECRET_KEY,
+    resave: false,
+    saveUninitialized: true,
+  })
+);
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(express.urlencoded({ extended: false }));
@@ -124,7 +131,7 @@ app.get("/log-out", (req, res, next) => {
   });
 });
 
-app.listen(3000, () => {
+app.listen(process.env.PORT, () => {
   console.log("App is listening on PORT 3000...");
 });
 
