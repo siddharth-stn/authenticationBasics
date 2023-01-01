@@ -5,6 +5,7 @@ const passport = require("passport");
 const LocalStrategy = require("passport-local").Strategy;
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
+const bcrypt = require("bcrypt");
 
 const mongoDb =
   "mongodb+srv://m001-student:mongodb-basics@sandbox.ed9rkru.mongodb.net/authenticationBasics?retryWrites=true&w=majority";
@@ -38,14 +39,14 @@ This function will be called by passport when we use the
 passport.authenticate() as a middleware in a route */
 passport.use(
   new LocalStrategy((username, password, done) => {
-    User.findOne({ username: username }, (err, user) => {
+    User.findOne({ username: username }, async (err, user) => {
       if (err) {
         return done(err);
       }
       if (!user) {
         return done(null, false, { message: "Incorrect username" });
       }
-      if (password !== user.password) {
+      if (!(await bcrypt.compare(password, user.password))) {
         return done(null, false, { message: "Incorrect password" });
       }
       return done(null, user);
@@ -75,13 +76,20 @@ app.use(session({ secret: "cats", resave: false, saveUninitialized: true }));
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(express.urlencoded({ extended: false }));
+app.use((req, res, next) => {
+  res.locals.currUser = req.user; // req.user is supplied by passport
+  next();
+});
 
-app.get("/", (req, res, next) => res.render("index", { user: req.user })); // This req.user is supplied by the passport middleware which runs on every route called.
+app.get("/", (req, res, next) =>
+  res.render("index", { user: res.locals.currUser })
+); // This req.user is supplied by the passport middleware which runs on every route called.
 app.get("/sign-up", (req, res, next) => res.render("sign-up-form"));
-app.post("/sign-up", (req, res, next) => {
+app.post("/sign-up", async (req, res, next) => {
+  const password = await bcrypt.hash(req.body.password, 10);
   const user = new User({
     username: req.body.username,
-    password: req.body.password,
+    password,
   });
   user.save((err) => {
     if (err) {
@@ -119,3 +127,5 @@ app.get("/log-out", (req, res, next) => {
 app.listen(3000, () => {
   console.log("App is listening on PORT 3000...");
 });
+
+//! Have to work with bcrypt
