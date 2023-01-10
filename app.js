@@ -113,6 +113,7 @@ app.post("/sign-up", async (req, res, next) => {
     if (err) {
       return next(err);
     }
+    console.log(req.username);
     res.redirect("/");
   });
 });
