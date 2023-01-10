@@ -103,20 +103,29 @@ app.get("/", (req, res, next) =>
   res.render("index", { user: res.locals.currUser })
 ); // This req.user is supplied by the passport middleware which runs on every route called.
 app.get("/sign-up", (req, res, next) => res.render("sign-up-form"));
-app.post("/sign-up", async (req, res, next) => {
-  const password = await bcrypt.hash(req.body.password, 10);
-  const user = new User({
-    username: req.body.username,
-    password,
-  });
-  user.save((err) => {
-    if (err) {
-      return next(err);
-    }
-    console.log(req.username);
-    res.redirect("/");
-  });
-});
+app.post(
+  "/sign-up",
+  async (req, res, next) => {
+    const password = await bcrypt.hash(req.body.password, 10);
+    const user = new User({
+      username: req.body.username,
+      password,
+    });
+    user.save((err) => {
+      if (err) {
+        return next(err);
+      }
+      next();
+    });
+  },
+  //now automatically login the user after register
+  //this function authenticates the user with the supplied request body
+  //with the html sign up form
+  passport.authenticate("local", {
+    successRedirect: "/",
+    failureRedirect: "/",
+  })
+);
 
 /* all we have to do is call passport.authenticate(). This middleware performs
 numerous functions behind the scenes. Among other things, it looks at
